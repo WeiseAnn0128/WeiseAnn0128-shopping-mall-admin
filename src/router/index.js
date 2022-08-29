@@ -135,6 +135,20 @@ export const dynamicRoutes = [
     ]
   },
   {
+    path: '/alert/type',
+    component: Layout,
+    hidden: true,
+    permissions: ['system:dict:list'],
+    children: [
+      {
+        path: ':dictId(\\d+)',
+        component: () => import('@/views/system/dict/data1'),
+        name: 'Type',
+        meta: { title: '警情类型', activeMenu: '/alert/type/100' }
+      }
+    ]
+  },
+  {
     path: '/monitor/job-log',
     component: Layout,
     hidden: true,
