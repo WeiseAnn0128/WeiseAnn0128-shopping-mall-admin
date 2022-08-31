@@ -609,7 +609,6 @@ export default {
       this.$refs["form"].validate(valid => {
         if (valid) {
           this.form.roleIds = [roleIdFireFighter];
-          this.form.password = '1234561';
           if (this.form.userId != undefined) {
             updateUser(this.form).then(response => {
               this.$modal.msgSuccess("修改成功");

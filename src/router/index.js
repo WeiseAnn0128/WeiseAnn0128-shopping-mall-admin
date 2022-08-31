@@ -135,7 +135,7 @@ export const dynamicRoutes = [
     ]
   },
   {
-    path: '/alert/type',
+    path: '/alarm/type',
     component: Layout,
     hidden: true,
     permissions: ['system:dict:list'],
@@ -144,7 +144,21 @@ export const dynamicRoutes = [
         path: ':dictId(\\d+)',
         component: () => import('@/views/system/dict/data1'),
         name: 'Type',
-        meta: { title: '警情类型', activeMenu: '/alert/type/100' }
+        meta: { title: '警情类型', activeMenu: '/alarm/type/100' }
+      }
+    ]
+  },
+  {
+    path: '/alarm/level',
+    component: Layout,
+    hidden: true,
+    permissions: ['system:dict:list'],
+    children: [
+      {
+        path: ':dictId(\\d+)',
+        component: () => import('@/views/system/dict/data1'),
+        name: 'Type',
+        meta: { title: '警情类型', activeMenu: '/alarm/level/101' }
       }
     ]
   },
