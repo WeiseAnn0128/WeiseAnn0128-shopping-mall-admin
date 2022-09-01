@@ -10,9 +10,9 @@ export function listAlarm(query) {
 }
 
 // 查询警情详细
-export function getAlarm(alermId) {
+export function getAlarm(alarmId) {
   return request({
-    url: '/web/alarm/' + alermId,
+    url: '/web/alarm/' + alarmId,
     method: 'get'
   })
 }
@@ -36,9 +36,9 @@ export function updateAlarm(data) {
 }
 
 // 删除警情
-export function delAlarm(alermId) {
+export function delAlarm(alarmId) {
   return request({
-    url: '/web/alarm/' + alermId,
+    url: '/web/alarm/' + alarmId,
     method: 'delete'
   })
 }

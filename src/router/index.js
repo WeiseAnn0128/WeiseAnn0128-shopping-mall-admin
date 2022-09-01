@@ -157,7 +157,7 @@ export const dynamicRoutes = [
       {
         path: ':dictId(\\d+)',
         component: () => import('@/views/system/dict/data1'),
-        name: 'Type',
+        name: 'Level',
         meta: { title: '警情类型', activeMenu: '/alarm/level/101' }
       }
     ]

@@ -9,9 +9,9 @@
           placeholder="请选择报警时间">
         </el-date-picker>
       </el-form-item>
-      <!-- <el-form-item label="报警地址" prop="adress">
+      <!-- <el-form-item label="报警地址" prop="address">
         <el-input
-          v-model="queryParams.adress"
+          v-model="queryParams.address"
           placeholder="请输入报警地址"
           clearable
           @keyup.enter.native="handleQuery"
@@ -36,7 +36,7 @@
       <el-form-item label="警情类型" prop="alarmType">
         <el-select v-model="queryParams.alarmType" placeholder="请选择警情类型" clearable>
           <el-option
-            v-for="dict in dict.type.zxy_alerm_type"
+            v-for="dict in dict.type.zxy_alarm_type"
             :key="dict.value"
             :label="dict.label"
             :value="dict.value"
@@ -107,7 +107,7 @@
 
     <el-table v-loading="loading" :data="alarmList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="警情id" align="center" prop="alermId" />
+      <el-table-column label="警情id" align="center" prop="alarmId" />
       <!-- <el-table-column label="备注" align="center" prop="remark" /> -->
       <el-table-column label="报警时间" align="center" prop="alarmTime" width="180">
         <template slot-scope="scope">
@@ -116,7 +116,7 @@
       </el-table-column>
       <el-table-column label="警情类型" align="center" prop="alarmType">
         <template slot-scope="scope">
-          <dict-tag :options="dict.type.zxy_alerm_type" :value="scope.row.alarmType"/>
+          <dict-tag :options="dict.type.zxy_alarm_type" :value="scope.row.alarmType"/>
         </template>
       </el-table-column>
       <el-table-column label="警情等级" align="center" prop="alarmLevel">
@@ -124,26 +124,15 @@
           <dict-tag :options="dict.type.zxy_alarm_level" :value="scope.row.alarmLevel"/>
         </template>
       </el-table-column>
-      <el-table-column label="报警地址" align="center" prop="adress" />
+      <el-table-column label="报警地址" align="center" prop="address" />
       <el-table-column label="报警人" align="center" prop="reporter" />
       <el-table-column label="报警人电话" align="center" prop="reporterPhoneNumber" />
       <el-table-column label="警情描述" align="center" prop="alarmDesc" />
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template slot-scope="scope">
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-edit"
-            @click="handleUpdate(scope.row)"
-            v-hasPermi="['web:alarm:edit']"
-          >修改</el-button>
-          <el-button
-            size="mini"
-            type="text"
-            icon="el-icon-delete"
-            @click="handleDelete(scope.row)"
-            v-hasPermi="['web:alarm:remove']"
-          >删除</el-button>
+          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleIssue(scope.row)" v-hasPermi="['web:alarm:issue']">下发</el-button>
+          <el-button size="mini" type="text" icon="el-icon-edit" @click="handleUpdate(scope.row)" v-hasPermi="['web:alarm:edit']">修改</el-button>
+          <el-button size="mini" type="text" icon="el-icon-delete" @click="handleDelete(scope.row)" v-hasPermi="['web:alarm:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -155,6 +144,23 @@
       :limit.sync="queryParams.pageSize"
       @pagination="getList"
     />
+
+    <!-- 警情下发对话框 -->
+    <el-dialog :title="title" :visible.sync="issueOpen" width="500px" append-to-body>
+      <el-form ref="issueForm" :model="issueForm" :rules="issueRules" label-width="80px">
+        <el-form-item label="下发内容" prop="content">
+          <el-input v-model="issueForm.content" type="textarea" placeholder="请输入内容" />
+        </el-form-item>
+        <el-form-item label="接收组织" prop="issueOrgs">
+          <treeselect v-model="issueForm.issueOrgs" :options="deptOptions" :show-count="true" :multiple="true" @select="onSelect" placeholder="请选择接收组织" />
+        </el-form-item>
+
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button type="primary" @click="issueSubmitForm">确 定</el-button>
+        <el-button @click="issueCancel">取 消</el-button>
+      </div>
+    </el-dialog>
 
     <!-- 添加或修改警情对话框 -->
     <el-dialog :title="title" :visible.sync="open" width="500px" append-to-body>
@@ -170,8 +176,8 @@
             placeholder="请选择报警时间">
           </el-date-picker>
         </el-form-item>
-        <el-form-item label="报警地址" prop="adress">
-          <el-input v-model="form.adress" placeholder="请输入报警地址" />
+        <el-form-item label="报警地址" prop="address">
+          <el-input v-model="form.address" placeholder="请输入报警地址" />
         </el-form-item>
         <el-form-item label="报警人" prop="reporter">
           <el-input v-model="form.reporter" placeholder="请输入报警人" />
@@ -182,7 +188,7 @@
         <el-form-item label="警情类型" prop="alarmType">
           <el-select v-model="form.alarmType" placeholder="请选择警情类型">
             <el-option
-              v-for="dict in dict.type.zxy_alerm_type"
+              v-for="dict in dict.type.zxy_alarm_type"
               :key="dict.value"
               :label="dict.label"
 :value="dict.value"
@@ -213,10 +219,14 @@
 
 <script>
 import { listAlarm, getAlarm, delAlarm, addAlarm, updateAlarm } from "@/api/web/alarm";
+import { listUser, deptTreeSelect } from "@/api/system/user1";
+import Treeselect from "@riophae/vue-treeselect";
+import "@riophae/vue-treeselect/dist/vue-treeselect.css";
 
 export default {
   name: "Alarm",
-  dicts: ['zxy_alerm_type', 'zxy_alarm_level'],
+  dicts: ['zxy_alarm_type', 'zxy_alarm_level'],
+  components: { Treeselect },
   data() {
     return {
       // 遮罩层
@@ -235,14 +245,16 @@ export default {
       alarmList: [],
       // 弹出层标题
       title: "",
+      deptOptions: undefined,
       // 是否显示弹出层
       open: false,
+      issueOpen: false,
       // 查询参数
       queryParams: {
         pageNum: 1,
         pageSize: 10,
         alarmTime: null,
-        adress: null,
+        address: null,
         reporter: null,
         reporterPhoneNumber: null,
         alarmType: null,
@@ -251,15 +263,34 @@ export default {
       },
       // 表单参数
       form: {},
+      issueForm: {},
       // 表单校验
-      rules: {
-      }
+      rules: {},
+      issueRules: {}
     };
   },
   created() {
     this.getList();
+    this.getDeptTree();
   },
   methods: {
+    issueSubmitForm() {
+      console.log(this.issueForm.firefighters)
+    },
+    onSelect(node, instanceId) {
+      this.loading = true;
+      listUser({pageNum: 1, pageSize: 20, deptId: node.id}).then(response => {
+          this.issueForm.firefighters = this.issueForm.firefighters.concat(response.rows)
+          this.issueForm.firefighters = this.issueForm.firefighters.filter((e, index, self) => {
+            return this.issueForm.firefighters.findIndex(e1 => e1.userId == e.userId) === index
+          })
+          this.loading = false;
+        }
+      );
+    },
+    onDeselect(node, instanceId) {
+      this.issueForm.firefighters = this.issueForm.firefighters.filter(e => e.orgId == node.id)
+    },
     /** 查询警情列表 */
     getList() {
       this.loading = true;
@@ -269,22 +300,36 @@ export default {
         this.loading = false;
       });
     },
+    /** 查询部门下拉树结构 */
+    getDeptTree() {
+      deptTreeSelect().then(response => {
+        this.deptOptions = response.data;
+      });
+    },
     // 取消按钮
     cancel() {
       this.open = false;
       this.reset();
     },
+    issueCancel() {
+      this.issueOpen = false;
+    },
     // 表单重置
     reset() {
+      this.issueForm = {
+        firefighters: [],
+        firefighterIds: [],
+        issueOrgs: []
+      },
       this.form = {
-        alermId: null,
+        alarmId: null,
         createBy: null,
         createTime: null,
         updateBy: null,
         updateTime: null,
         remark: null,
         alarmTime: null,
-        adress: null,
+        address: null,
         reporter: null,
         reporterPhoneNumber: null,
         alarmType: null,
@@ -305,7 +350,7 @@ export default {
     },
     // 多选框选中数据
     handleSelectionChange(selection) {
-      this.ids = selection.map(item => item.alermId)
+      this.ids = selection.map(item => item.alarmId)
       this.single = selection.length!==1
       this.multiple = !selection.length
     },
@@ -315,11 +360,16 @@ export default {
       this.open = true;
       this.title = "添加警情";
     },
+    handleIssue(row) {
+      this.reset();
+      this.issueOpen = true;
+      this.title = "警情下发";
+    },
     /** 修改按钮操作 */
     handleUpdate(row) {
       this.reset();
-      const alermId = row.alermId || this.ids
-      getAlarm(alermId).then(response => {
+      const alarmId = row.alarmId || this.ids
+      getAlarm(alarmId).then(response => {
         this.form = response.data;
         this.open = true;
         this.title = "修改警情";
@@ -329,7 +379,7 @@ export default {
     submitForm() {
       this.$refs["form"].validate(valid => {
         if (valid) {
-          if (this.form.alermId != null) {
+          if (this.form.alarmId != null) {
             updateAlarm(this.form).then(response => {
               this.$modal.msgSuccess("修改成功");
               this.open = false;
@@ -347,9 +397,9 @@ export default {
     },
     /** 删除按钮操作 */
     handleDelete(row) {
-      const alermIds = row.alermId || this.ids;
-      this.$modal.confirm('是否确认删除警情编号为"' + alermIds + '"的数据项？').then(function() {
-        return delAlarm(alermIds);
+      const alarmIds = row.alarmId || this.ids;
+      this.$modal.confirm('是否确认删除警情编号为"' + alarmIds + '"的数据项？').then(function() {
+        return delAlarm(alarmIds);
       }).then(() => {
         this.getList();
         this.$modal.msgSuccess("删除成功");
