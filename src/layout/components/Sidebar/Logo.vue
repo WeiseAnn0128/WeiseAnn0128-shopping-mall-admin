@@ -35,7 +35,7 @@ export default {
   },
   data() {
     return {
-      title: '若依管理系统',
+      title: '警情联动系统',
       logo: logoImg
     }
   }
