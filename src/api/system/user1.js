@@ -10,6 +10,13 @@ export function listUser(query) {
   })
 }
 
+export function listFireFighterByOrgs(query) {
+  return request({
+    url: '/system/user/listFireFighterByOrgs/' + query,
+    method: 'get',
+  })
+}
+
 // 查询用户详细
 export function getUser(userId) {
   return request({
