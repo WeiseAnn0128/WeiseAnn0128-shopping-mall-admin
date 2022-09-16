@@ -381,6 +381,30 @@ export default {
       this.$refs["issueForm"].validate(valid => {
         if (valid) {
           issue(this.issueForm.firefighterIds, this.issueForm.alarmId)
+          .then(response => {
+            this.$modal.msgSuccess("下发成功");
+            this.issueOpen = false;
+          })
+        }
+      });
+    },
+    /** 提交按钮 */
+    submitForm() {
+      this.$refs["form"].validate(valid => {
+        if (valid) {
+          if (this.form.alarmId != null) {
+            updateAlarm(this.form).then(response => {
+              this.$modal.msgSuccess("修改成功");
+              this.open = false;
+              this.getList();
+            });
+          } else {
+            addAlarm(this.form).then(response => {
+              this.$modal.msgSuccess("新增成功");
+              this.open = false;
+              this.getList();
+            });
+          }
         }
       });
     },
@@ -429,26 +453,6 @@ export default {
         this.form = response.data;
         this.open = true;
         this.title = "修改警情";
-      });
-    },
-    /** 提交按钮 */
-    submitForm() {
-      this.$refs["form"].validate(valid => {
-        if (valid) {
-          if (this.form.alarmId != null) {
-            updateAlarm(this.form).then(response => {
-              this.$modal.msgSuccess("修改成功");
-              this.open = false;
-              this.getList();
-            });
-          } else {
-            addAlarm(this.form).then(response => {
-              this.$modal.msgSuccess("新增成功");
-              this.open = false;
-              this.getList();
-            });
-          }
-        }
       });
     },
     /** 查询警情列表 */
